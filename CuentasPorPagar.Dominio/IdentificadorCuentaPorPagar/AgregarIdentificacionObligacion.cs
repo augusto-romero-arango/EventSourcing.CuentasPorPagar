@@ -1,0 +1,3 @@
+namespace CuentasPorPagar.Dominio.IdentificadorCuentaPorPagar;
+
+public record AgregarIdentificacionObligacion(Guid IdCuentaPorPagar, string Identificador);

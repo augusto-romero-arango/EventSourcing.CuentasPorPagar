@@ -1,0 +1,32 @@
+services:
+  cuentasporpagardatabase:
+    container_name: cuentasporpagar_database
+    restart: always
+    environment:
+      POSTGRES_USER: CuentasPorPagarUser
+      POSTGRES_PASSWORD: CuentasPorPagarPassword
+      POSTGRES_DB: cuentasporpagardb
+    ports:
+      - "5432:5432"
+  cuentasporpagarapi:
+    container_name: cuentasporpagar_api
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - cuentasporpagardatabase
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__MartenEventStore=Host=cuentasporpagardatabase;Port=5432;Database=cuentasporpagardb;Username=CuentasPorPagarUser;Password=CuentasPorPagarPassword
+      - OpenTelemetryEndpoint=http://cuentasporpagar-aspire-dashboard:18889
+  cuentasporpagar-aspire-dashboard:
+    container_name: cuentasporpagar_aspire_dashboard
+    ports:
+      - "18888:18888"
+      - "4317:18889"
+    environment:
+      - ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+      - Dashboard:Otlp:AuthMode=Unsecured
+      - Dashboard:Frontend:AuthMode=Unsecured
+    restart: unless-stopped

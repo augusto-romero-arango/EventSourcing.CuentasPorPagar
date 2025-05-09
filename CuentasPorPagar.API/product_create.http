@@ -1,0 +1,12 @@
+### POST CREATE PRODUCT
+POST http://localhost:8080/product
+Accept: application/json
+Content-Type: application/json
+
+{
+  "name": "Test Product",
+  "description": "This is a test product",
+  "price": 19.99
+}
+
+###

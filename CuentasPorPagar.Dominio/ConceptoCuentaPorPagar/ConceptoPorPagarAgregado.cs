@@ -1,0 +1,3 @@
+namespace CuentasPorPagar.Dominio.ConceptoCuentaPorPagar;
+
+public record ConceptoPorPagarAgregado(Guid IdCuentaPorPagar, ConceptoPorPagar ConceptoPorPagar);

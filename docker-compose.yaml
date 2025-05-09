@@ -1,0 +1,15 @@
+services:
+  cuentasporpagardatabase:
+    image: postgres:latest    
+    volumes:
+      - CuentasPorPagarDb:/var/lib/postgresql/data
+  cuentasporpagarapi:
+    image: ${DOCKER_REGISTRY-}api
+    build:
+      context: .
+      dockerfile: CuentasPorPagar.API/Dockerfile
+  cuentasporpagar-aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard
+    
+volumes:
+  CuentasPorPagarDb:
