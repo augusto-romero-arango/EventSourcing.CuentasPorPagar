@@ -20,4 +20,16 @@ public class AgregarAcreedorTest : CommandHandlerTest<AgregarAcreedor>
         And<CuentaPorPagar>(cxp => cxp.Acreedor!, acreedor);
 
     }
+    
+    [Fact]
+    public void Si_AgregarAcreedor_CuentaPorPagarRegistraAcreedor_ResponsableIva()
+    {
+        Given(new CrearBorradorCuentaPorPagar(_aggregateId, new DateOnly(2025, 5, 9),Moneda.COP));
+        var acreedor = new Acreedor(TipoDocumento.Nit, "1111111", "Acreedor 1", new ResponsableIva());
+        When(new AgregarAcreedor(_aggregateId, acreedor));
+        Then(new AcreedorAgregado(_aggregateId, acreedor));
+        And<CuentaPorPagar>(cxp => cxp.Acreedor!, acreedor);
+
+    }
 }
+

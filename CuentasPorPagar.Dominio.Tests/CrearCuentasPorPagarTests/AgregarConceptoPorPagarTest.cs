@@ -1,3 +1,4 @@
+using CuentasPorPagar.Dominio.AcreedorCuentaPorPagar;
 using CuentasPorPagar.Dominio.BorradorCuentaPorPagar;
 using CuentasPorPagar.Dominio.ConceptoCuentaPorPagar;
 using CuentasPorPagar.Dominio.Entidades;
@@ -44,20 +45,86 @@ public class AgregarConceptoPorPagarTest : CommandHandlerAsyncTest<AgregarConcep
     }
 
     [Fact]
-    public async Task Si_ConceptoPorPagarEsGravadoConIVA19_DebeCalcularIVA()
+    public async Task Si_ConceptoPorPagarEsGravadoConIVA19_AcreedorEsResponsableDeIVA_DebeCalcularIVA()
     {
-        Given(new CrearBorradorCuentaPorPagar(_aggregateId, new DateOnly(2025, 5, 9), Moneda.COP));
+        Given(new CrearBorradorCuentaPorPagar(_aggregateId, new DateOnly(2025, 5, 9), Moneda.COP),
+            new AcreedorAgregado(_aggregateId, new Acreedor(TipoDocumento.Nit, "1111111", "Acreedor 1", new ResponsableIva())));
+        
         var conceptoGravado = new ConceptoPorPagar("190.1", "Ventanas", [new Iva19()]);
         var centroCosto = new CentroCosto("0101", "CC 0101");
         var concepto = new DetallePorPagar(Guid.NewGuid(), conceptoGravado, centroCosto, Dinero.COP(1_000_000m));
         
         await WhenAsync(new AgregarConceptoPorPagar(_aggregateId, concepto));
+        
         Then(new ConceptoPorPagarAgregado(_aggregateId, concepto), 
             new ImpuestoAplicado(_aggregateId, new Impuesto(concepto.IdConcepto, "IVA 19%", 0.19m, Dinero.COP(1_000_000), Dinero.COP(190_000))));
         And<CuentaPorPagar>(cxp => cxp.ConceptosPorPagar,  new List<DetallePorPagar>
         {
-            new(concepto.IdConcepto, conceptoGravado, centroCosto, concepto.Monto, [new ImpuestoAPagar(Dinero.COP(1_000_000), 0.19m, Dinero.COP(190_000) )])
+            new(concepto.IdConcepto, conceptoGravado, centroCosto, concepto.Monto, 
+                [new ImpuestoAPagar(Dinero.COP(1_000_000), 0.19m, Dinero.COP(190_000) )])
         });
-
     }
+    
+    [Fact]
+    public async Task Si_ConceptoPorPagarEsGravadoConIVA19_AcreedorNoEsResponsableDeIVA_NoDebeCalcularIVA()
+    {
+        Given(new CrearBorradorCuentaPorPagar(_aggregateId, new DateOnly(2025, 5, 9), Moneda.COP),
+            new AcreedorAgregado(_aggregateId, new Acreedor(TipoDocumento.Nit, "1111111", "Acreedor 1")));
+        
+        var conceptoGravado = new ConceptoPorPagar("190.1", "Ventanas", [new Iva19()]);
+        var centroCosto = new CentroCosto("0101", "CC 0101");
+        var concepto = new DetallePorPagar(Guid.NewGuid(), conceptoGravado, centroCosto, Dinero.COP(1_000_000m));
+        
+        await WhenAsync(new AgregarConceptoPorPagar(_aggregateId, concepto));
+        
+        Then(new ConceptoPorPagarAgregado(_aggregateId, concepto));
+        And<CuentaPorPagar>(cxp => cxp.ConceptosPorPagar,  new List<DetallePorPagar>
+        {
+            new(concepto.IdConcepto, conceptoGravado, centroCosto, concepto.Monto)
+        });
+    }
+    
+    [Fact]
+    public async Task Si_ConceptoPorPagarEsGravadoConImpuestoConsumo8_AcreedorNoEsResponsableDeIVA_DebeCalcularImpuestoConsumo()
+    {
+        Given(new CrearBorradorCuentaPorPagar(_aggregateId, new DateOnly(2025, 5, 9), Moneda.COP),
+            new AcreedorAgregado(_aggregateId, new Acreedor(TipoDocumento.Nit, "1111111", "Acreedor 1")));
+        
+        var conceptoGravado = new ConceptoPorPagar("190.1", "Ventanas", [new Inc8()]);
+        var centroCosto = new CentroCosto("0101", "CC 0101");
+        var concepto = new DetallePorPagar(Guid.NewGuid(), conceptoGravado, centroCosto, Dinero.COP(1_000_000m));
+        
+        await WhenAsync(new AgregarConceptoPorPagar(_aggregateId, concepto));
+        
+        Then(new ConceptoPorPagarAgregado(_aggregateId, concepto), 
+            new ImpuestoAplicado(_aggregateId, new Impuesto(concepto.IdConcepto, "INC 8%", 0.08m, Dinero.COP(1_000_000), Dinero.COP(80_000))));
+        And<CuentaPorPagar>(cxp => cxp.ConceptosPorPagar,  new List<DetallePorPagar>
+        {
+            new(concepto.IdConcepto, conceptoGravado, centroCosto, concepto.Monto, 
+                [new ImpuestoAPagar(Dinero.COP(1_000_000), 0.08m, Dinero.COP(80_000) )])
+        });
+    }
+    
+    [Fact]
+    public async Task Si_ConceptoPorPagarEsGravadoConImpuestoConsumo8_AcreedorEsResponsableDeIVA_DebeCalcularImpuestoConsumo()
+    {
+        Given(new CrearBorradorCuentaPorPagar(_aggregateId, new DateOnly(2025, 5, 9), Moneda.COP),
+            new AcreedorAgregado(_aggregateId, new Acreedor(TipoDocumento.Nit, "1111111", "Acreedor 1", new ResponsableIva())));;
+        
+        var conceptoGravado = new ConceptoPorPagar("190.1", "Ventanas", [new Inc8()]);
+        var centroCosto = new CentroCosto("0101", "CC 0101");
+        var concepto = new DetallePorPagar(Guid.NewGuid(), conceptoGravado, centroCosto, Dinero.COP(1_000_000m));
+        
+        await WhenAsync(new AgregarConceptoPorPagar(_aggregateId, concepto));
+        
+        Then(new ConceptoPorPagarAgregado(_aggregateId, concepto), 
+            new ImpuestoAplicado(_aggregateId, new Impuesto(concepto.IdConcepto, "INC 8%", 0.08m, Dinero.COP(1_000_000), Dinero.COP(80_000))));
+        And<CuentaPorPagar>(cxp => cxp.ConceptosPorPagar,  new List<DetallePorPagar>
+        {
+            new(concepto.IdConcepto, conceptoGravado, centroCosto, concepto.Monto, 
+                [new ImpuestoAPagar(Dinero.COP(1_000_000), 0.08m, Dinero.COP(80_000) )])
+        });
+    }
+    
 }
+

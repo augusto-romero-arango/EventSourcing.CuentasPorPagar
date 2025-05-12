@@ -32,9 +32,9 @@ public class CuentaPorPagar : AggregateRoot
 
     public void Apply(ImpuestoAplicado @event)
     {
-        var concepto = ConceptosPorPagar.First(c => c.IdConcepto== @event.Impuesto.IdConceptoPorPagar);
+        var concepto = ConceptosPorPagar
+            .First(c => c.IdConcepto== @event.Impuesto.IdConceptoPorPagar);
         concepto.AgregarImpuesto(@event.Impuesto);
-        
     }
     
     public DateOnly Fecha { get; private set; }

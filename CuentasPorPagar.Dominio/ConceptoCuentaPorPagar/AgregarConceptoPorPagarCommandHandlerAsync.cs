@@ -1,3 +1,4 @@
+using CuentasPorPagar.Dominio.AcreedorCuentaPorPagar;
 using CuentasPorPagar.Dominio.Entidades;
 using CuentasPorPagar.Dominio.EventosComunes;
 
@@ -19,15 +20,33 @@ public class AgregarConceptoPorPagarCommandHandler(IEventStore eventStore) : ICo
 
         eventStore.AppendEvent(command.IdCuentaPorPagar, new ConceptoPorPagarAgregado(command.IdCuentaPorPagar, command.DetallePorPagar));
 
-        var impuestosAAplicar = command.DetallePorPagar.ConceptoPorPagar.ImpuestosAAplicar;
+        IImpuesto[]? impuestosAAplicar = command.DetallePorPagar.ConceptoPorPagar.ImpuestosAAplicar;
         if (impuestosAAplicar != null)
         {
             foreach (var impuesto in impuestosAAplicar)
             {
-                var impuestoAplicado = new ImpuestoAplicado(command.IdCuentaPorPagar,
-                    new Impuesto(command.DetallePorPagar.IdConcepto, impuesto.Descripcion, impuesto.Tasa,
-                        command.DetallePorPagar.Monto, command.DetallePorPagar.Monto * impuesto.Tasa));
-                eventStore.AppendEvent(command.IdCuentaPorPagar, impuestoAplicado);
+                if (impuesto is Iva19)
+                {
+                    if (cuentaPorPagar.Acreedor?.CalidadTributaria is not ResponsableIva) 
+                        continue;
+                
+                    var impuestoAplicado = new ImpuestoAplicado(command.IdCuentaPorPagar,
+                        new Impuesto(command.DetallePorPagar.IdConcepto, impuesto.Descripcion, impuesto.Tasa,
+                            command.DetallePorPagar.Monto, command.DetallePorPagar.Monto * impuesto.Tasa));
+                    
+                    eventStore.AppendEvent(command.IdCuentaPorPagar, impuestoAplicado);
+                }
+
+                if (impuesto is Inc8)
+                {
+                    var impuestoAplicado = new ImpuestoAplicado(command.IdCuentaPorPagar,
+                        new Impuesto(command.DetallePorPagar.IdConcepto, impuesto.Descripcion, impuesto.Tasa,
+                            command.DetallePorPagar.Monto, command.DetallePorPagar.Monto * impuesto.Tasa));
+                    
+                    eventStore.AppendEvent(command.IdCuentaPorPagar, impuestoAplicado);
+                }
+                
+
             }
         }
     }

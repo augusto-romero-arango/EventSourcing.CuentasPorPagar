@@ -36,3 +36,8 @@ public record Iva19 : IImpuesto
     public string Descripcion => "IVA 19%";
     public decimal Tasa => 0.19m;
 }
+public record Inc8 : IImpuesto
+{
+    public string Descripcion => "INC 8%";
+    public decimal Tasa => 0.08m;
+}
