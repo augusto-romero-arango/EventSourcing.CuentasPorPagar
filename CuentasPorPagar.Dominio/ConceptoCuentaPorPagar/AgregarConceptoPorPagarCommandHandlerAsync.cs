@@ -7,16 +7,28 @@ public class AgregarConceptoPorPagarCommandHandler(IEventStore eventStore) : ICo
 {
     public async Task HandleAsync(AgregarConceptoPorPagar command, CancellationToken cancellationToken)
     {
-        if(command.ConceptoPorPagar.Monto.Valor == 0)
+        if(command.DetallePorPagar.Monto.Valor == 0)
             return;
         
         var cuentaPorPagar = await eventStore.GetAggregateRootAsync<CuentaPorPagar>(command.IdCuentaPorPagar, cancellationToken);
-        if (cuentaPorPagar!.Moneda != command.ConceptoPorPagar.Monto.Moneda)
+        if (cuentaPorPagar!.Moneda != command.DetallePorPagar.Monto.Moneda)
         {
             eventStore.AppendEvent(command.IdCuentaPorPagar, new CuentaPorPagarIncorrecta( CuentaPorPagarIncorrecta.RazonError.MonedaIncorrecta));
             return;
         }
-            
-        eventStore.AppendEvent(command.IdCuentaPorPagar, new ConceptoPorPagarAgregado(command.IdCuentaPorPagar, command.ConceptoPorPagar));
+
+        eventStore.AppendEvent(command.IdCuentaPorPagar, new ConceptoPorPagarAgregado(command.IdCuentaPorPagar, command.DetallePorPagar));
+
+        var impuestosAAplicar = command.DetallePorPagar.ConceptoPorPagar.ImpuestosAAplicar;
+        if (impuestosAAplicar != null)
+        {
+            foreach (var impuesto in impuestosAAplicar)
+            {
+                var impuestoAplicado = new ImpuestoAplicado(command.IdCuentaPorPagar,
+                    new Impuesto(command.DetallePorPagar.IdConcepto, impuesto.Descripcion, impuesto.Tasa,
+                        command.DetallePorPagar.Monto, command.DetallePorPagar.Monto * impuesto.Tasa));
+                eventStore.AppendEvent(command.IdCuentaPorPagar, impuestoAplicado);
+            }
+        }
     }
 }

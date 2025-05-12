@@ -1,15 +1,4 @@
-using System.Runtime.CompilerServices;
-
 namespace CuentasPorPagar.Dominio.ConceptoCuentaPorPagar;
-
-public record ConceptoPorPagar(
-    Guid IdConcepto,
-    string Codigo,
-    string Descripcion,
-    CentroCosto? CentroCosto,
-    Dinero Monto);
-
-public record CentroCosto(string Id, string Descripcion);
 
 public record Dinero
 {
@@ -38,6 +27,10 @@ public record Dinero
         if (minuendo.Moneda != sustraendo.Moneda)
             throw new InvalidOperationException("No se pueden operar montos de diferentes monedas");
         return new Dinero(minuendo.Valor - sustraendo.Valor, minuendo.Moneda);
+    }
+    public static Dinero operator *(Dinero multiplicando, decimal multiplicador)
+    {
+        return new Dinero(multiplicando.Valor * multiplicador, multiplicando.Moneda);
     }
 }
 
