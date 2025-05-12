@@ -32,6 +32,27 @@ public record Dinero
     {
         return new Dinero(multiplicando.Valor * multiplicador, multiplicando.Moneda);
     }
+
+    public static bool operator > (Dinero dinero1, Dinero dinero2)
+    {
+        if (dinero1.Moneda != dinero2.Moneda)
+            throw new InvalidOperationException("No se pueden operar montos de diferentes monedas");
+        return dinero1.Valor > dinero2.Valor;
+    }
+    public static bool operator <=(Dinero dinero1, Dinero dinero2)
+    {
+        return !(dinero1 > dinero2);
+    }
+
+    public static bool operator >=(Dinero dinero1, Dinero dinero2)
+    {
+        return dinero1 > dinero2 || dinero1 == dinero2;
+    }
+    
+    public static bool operator <(Dinero dinero1, Dinero dinero2)
+    {
+        return !(dinero1>=dinero2);
+    }
 }
 
 public enum Moneda
